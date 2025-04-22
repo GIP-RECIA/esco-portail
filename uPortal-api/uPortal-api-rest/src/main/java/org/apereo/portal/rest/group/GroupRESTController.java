@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
+import org.apache.commons.lang3.StringUtils;
 import org.apereo.portal.groups.IEntityGroup;
 import org.apereo.portal.groups.IGroupMember;
 import org.apereo.portal.portlets.groupselector.EntityEnum;
@@ -26,6 +27,7 @@ import org.apereo.portal.security.IPersonManager;
 import org.apereo.portal.services.GroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
@@ -54,6 +56,22 @@ public class GroupRESTController {
                                 .map(group -> EntityFactory.createEntity(group, EntityEnum.GROUP))
                                 .collect(Collectors.toSet());
             }
+        }
+
+        return new ModelAndView("json", "groups", groups);
+    }
+
+    @RequestMapping(value = "/groups/{username}", method = RequestMethod.GET)
+    public ModelAndView getUsersGroup(
+            HttpServletRequest request, @PathVariable("username") String username) {
+        Set<Entity> groups = Collections.emptySet();
+        if (StringUtils.isNotBlank(username)) {
+            final IGroupMember member = GroupService.getGroupMember(username, IPerson.class);
+            final Set<IEntityGroup> parents = member.getParentGroups();
+            groups =
+                    parents.stream()
+                            .map(group -> EntityFactory.createEntity(group, EntityEnum.GROUP))
+                            .collect(Collectors.toSet());
         }
 
         return new ModelAndView("json", "groups", groups);
